@@ -1,0 +1,12 @@
+extends layout
+
+block page 
+	- var menu = 'index'
+block content
+	if (vouchers.length === 0)
+		| No vouchers yet. 
+	else 
+		each voucher, index in vouchers
+			div
+				h2
+					a(href="/vouchers/#{voucher.slug}")= voucher.title
