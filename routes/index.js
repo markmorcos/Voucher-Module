@@ -6,8 +6,13 @@ exports.user = require('./user');
  */
 
 exports.index = function(req, res, next) {
-	req.collections.vouchers.find({ published: true }, { sort: { _id: -1 } }).toArray(function(error, vouchers) {
-		if (error) return next(error);
+	var Voucher = Parse.Object.extend("Voucher");
+	var query = new Parse.Query(Voucher);
+	query.find({
+		success: function(vouchers) {
 		res.render('index', { vouchers: vouchers });
-	})
+		}, error: function(error) {
+			return next(error);
+		}
+	});
 };

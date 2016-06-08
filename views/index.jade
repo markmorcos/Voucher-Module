@@ -6,7 +6,10 @@ block content
 	if (vouchers.length === 0)
 		| No vouchers yet. 
 	else 
-		each voucher, index in vouchers
+		each voucher in vouchers
+			- voucher = voucher.toJSON()
 			div
 				h2
-					a(href="/vouchers/#{voucher.slug}")= voucher.title
+					a(href="/api/vouchers/#{voucher.code}")= voucher.code
+					a(href="/vouchers/#{voucher.code}/edit")  Edit
+					a(href="/api/vouchers/#{voucher.code}", data-method="delete")  Delete

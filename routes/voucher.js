@@ -1,10 +1,12 @@
 /*
- * GET vouchers API.
+ * GET index voucher API.
  */
 
 exports.index = function(req, res, next) {
 	var Voucher = Parse.Object.extend("Voucher");
 	var query = new Parse.Query(Voucher);
+	if (req.params.code) query.equalTo('username', req.params.username);
+	if (req.query.username) query.equalTo('username', req.query.username);
 	query.find({
 		success: function(vouchers) {
 			res.send({ vouchers: vouchers });
@@ -15,7 +17,7 @@ exports.index = function(req, res, next) {
 };
 
 /*
- * GET voucher API.
+ * GET show voucher API.
  */
 
 exports.show = function(req, res, next) {
@@ -41,7 +43,7 @@ exports.new = function(req, res, next) {
 };
 
 /*
- * POST voucher API.
+ * POST create voucher API.
  */
 
 exports.create = function(req, res, next) {
@@ -49,18 +51,18 @@ exports.create = function(req, res, next) {
 	var generatedCode = Math.random().toString(36).substr(2);
 	var voucher = {
 		code: req.body.code || generatedCode,
-		central: req.body.central || true,
+		central: (req.body.central == undefined ? false : true),
 		usageLimit: req.body.usageLimit,
 		startTimestamp: req.body.startTimestamp,
 		endTimestamp: req.body.endTimestamp,
 		characters: req.body.characters,
 		username: req.body.username,
-		tradability: req.body.tradability
+		tradable: (req.body.tradable == undefined ? false : true)
 	};
 	var Voucher = Parse.Object.extend("Voucher");
 	new Voucher().save(voucher, {
 		success: function(voucher) {
-			res.render('vouchers/new', { error: "Voucher was added. Publish it on Admin page." });
+			res.render('vouchers/edit', { voucher: voucher.toJSON(), error: "Voucher added." });
 		}, error: function(error) {
 			return next(error);
 		}
@@ -77,7 +79,7 @@ exports.edit = function(req, res, next) {
 	query.equalTo('code', req.params.code);
 	query.first({
 		success: function(voucher) {
-			res.render('vouchers/new', { voucher: voucher });
+			res.render('vouchers/edit', { voucher: voucher.toJSON() });
 		}, error: function(error) {
 			return next(error);
 		}
@@ -85,27 +87,53 @@ exports.edit = function(req, res, next) {
 };
 
 /*
- * PUT voucher API.
+ * PUT update voucher API.
  */
 
 exports.update = function(req, res, next) {
-	if (!req.body.code) return res.render('vouchers/new', { error: "No voucher code." });
+	if (!req.params.code) return next(new Error('No voucher code.'));
 	var Voucher = Parse.Object.extend("Voucher");
 	var query = new Parse.Query(Voucher);
 	query.equalTo('code', req.params.code);
-	query.find({
+	query.first({
 		success: function(voucher) {
-			voucher.set('code', req.body.code || generatedCode);
-			voucher.set('central', req.body.central || false);
-			voucher.set('usageLimit', req.body.usageLimit);
-			voucher.set('startTimestamp', req.body.startTimestamp);
-			voucher.set('endTimestamp', req.body.endTimestamp);
-			voucher.set('characters', req.body.characters);
-			voucher.set('username', req.body.username);
-			voucher.set('tradability', req.body.tradability);
+			if (!voucher) return next(new Error("No voucher found." ));
+			voucher.set('code', req.body.code == undefined ? voucher.get('code') : req.body.code);
+			voucher.set('central', req.body.central == undefined ? voucher.get('central') : req.body.central);
+			voucher.set('usageLimit', req.body.usageLimit == undefined ? voucher.get('usageLimit') : req.body.usageLimit);
+			voucher.set('startTimestamp', req.body.startTimestamp == undefined ? voucher.get('startTimestamp') : req.body.startTimestamp);
+			voucher.set('endTimestamp', req.body.endTimestamp == undefined ? voucher.get('endTimestamp') : req.body.endTimestamp);
+			voucher.set('characters', req.body.characters == undefined ? voucher.get('characters') : req.body.characters);
+			voucher.set('username', req.body.username == undefined ? voucher.get('username') : req.body.username);
+			voucher.set('tradable', req.body.tradable == undefined ? voucher.get('tradable') : req.body.tradable);
 			voucher.save(null, {
 				success: function(voucher) {
-					res.send({ code: voucher.code });
+					res.send({ voucher: voucher });
+				}, error: function(error) {
+					return next(error);
+				}
+			})
+		}, error: function(error) {
+			return next(error);
+		}
+	});
+};
+
+/*
+ * PUT assign voucher API.
+ */
+
+exports.assign = function(req, res, next) {
+	if (!req.params.code) return next(new Error("No voucher code." ));
+	var Voucher = Parse.Object.extend("Voucher");
+	var query = new Parse.Query(Voucher);
+	query.equalTo('code', req.params.code);
+	query.first({
+		success: function(voucher) {
+			if (!voucher) return next(new Error("No voucher found." ));
+			voucher.destroy({
+				success: function(voucher) {
+					res.send({ success: true });
 				}, error: function(error) {
 					return next(error);
 				}
@@ -117,16 +145,42 @@ exports.update = function(req, res, next) {
 };
 
 /*
- * DELETE voucher API.
+ * POST activate voucher API.
  */
 
-exports.delete = function(req, res, next) {
-	if (!req.body.code) return next(new Error("No voucher code." ));
+exports.activate = function(req, res, next) {
+	if (!req.params.code) return next(new Error("No voucher code." ));
 	var Voucher = Parse.Object.extend("Voucher");
 	var query = new Parse.Query(Voucher);
 	query.equalTo('code', req.params.code);
-	query.find({
+	query.first({
 		success: function(voucher) {
+			if (!voucher) return next(new Error("No voucher found." ));
+			voucher.destroy({
+				success: function(voucher) {
+					res.send({ success: true });
+				}, error: function(error) {
+					return next(error);
+				}
+			});
+		}, error: function(error) {
+			return next(error);
+		}
+	});
+};
+
+/*
+ * DELETE delete voucher API.
+ */
+
+exports.delete = function(req, res, next) {
+	if (!req.params.code) return next(new Error("No voucher code." ));
+	var Voucher = Parse.Object.extend("Voucher");
+	var query = new Parse.Query(Voucher);
+	query.equalTo('code', req.params.code);
+	query.first({
+		success: function(voucher) {
+			if (!voucher) return next(new Error("No voucher found." ));
 			voucher.destroy({
 				success: function(voucher) {
 					res.send({ success: true });

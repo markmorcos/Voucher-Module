@@ -84,6 +84,7 @@ app.use(app.router);
 
 // pages
 app.get('/', routes.index);
+
 app.get('/login', routes.user.login);
 app.post('/login', routes.user.authenticate);
 app.get('/logout', routes.user.logout);
@@ -95,10 +96,12 @@ app.get('/vouchers/:code/edit', /*authorize,*/ routes.voucher.edit);
 // app.all('/api', authorize);
 
 app.get('/api/vouchers', routes.voucher.index);
-app.get('/api/vouchers/:code', routes.voucher.show);
+app.get('/api/vouchers/:code', routes.voucher.index);
 
 app.post('/api/vouchers', routes.voucher.create);
 app.put('/api/vouchers/:code', routes.voucher.update);
+app.put('/api/vouchers/:code/assign', routes.voucher.assign);
+app.put('/api/vouchers/:code/activate', routes.voucher.activate);
 app.del('/api/vouchers/:code', routes.voucher.delete);
 
 app.all('*', function(req, res) {
@@ -107,7 +110,7 @@ app.all('*', function(req, res) {
 
 var server = http.createServer(app);
 var boot = function () {
-	server.listen(app.get('port'), function(){
+	server.listen(app.get('port'), function() {
 		console.info(app.locals.appTitle + ' running on http://127.0.0.1:' + app.get('port'));
 	});
 }
