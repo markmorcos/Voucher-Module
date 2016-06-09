@@ -5,8 +5,8 @@
 exports.index = function(req, res, next) {
 	var Voucher = Parse.Object.extend("Voucher");
 	var query = new Parse.Query(Voucher);
-	if (req.params.code) query.equalTo('username', req.params.username);
-	if (req.query.username) query.equalTo('username', req.query.username);
+	if (req.params.code) query.equalTo("code", req.params.code);
+	if (req.query.username) query.equalTo("username", req.query.username);
 	query.find({
 		success: function(vouchers) {
 			res.send({ vouchers: vouchers });
@@ -21,10 +21,10 @@ exports.index = function(req, res, next) {
  */
 
 exports.show = function(req, res, next) {
-	if (!req.params.code) return next(new Error('No voucher code.'));
+	if (!req.params.code) return next(new Error("No voucher code."));
 	var Voucher = Parse.Object.extend("Voucher");
 	var query = new Parse.Query(Voucher);
-	query.equalTo('code', req.params.code);
+	query.equalTo("code", req.params.code);
 	query.first({
 		success: function(voucher) {
 			res.send({ voucher: voucher });
@@ -39,7 +39,7 @@ exports.show = function(req, res, next) {
  */
 
 exports.new = function(req, res, next) {
-	if (!req.body.title) res.render('vouchers/new');
+	if (!req.body.title) res.render("vouchers/new");
 };
 
 /*
@@ -47,7 +47,7 @@ exports.new = function(req, res, next) {
  */
 
 exports.create = function(req, res, next) {
-	if (!req.body.usageLimit) return res.render('vouchers/new', { error: "Please enter the usage limit." });
+	if (!req.body.usageLimit) return res.render("vouchers/new", { error: "Please enter the usage limit." });
 	var generatedCode = Math.random().toString(36).substr(2);
 	var voucher = {
 		code: req.body.code || generatedCode,
@@ -62,7 +62,7 @@ exports.create = function(req, res, next) {
 	var Voucher = Parse.Object.extend("Voucher");
 	new Voucher().save(voucher, {
 		success: function(voucher) {
-			res.render('vouchers/edit', { voucher: voucher.toJSON(), error: "Voucher added." });
+			res.render("vouchers/edit", { voucher: voucher.toJSON(), error: "Voucher added." });
 		}, error: function(error) {
 			return next(error);
 		}
@@ -76,10 +76,10 @@ exports.create = function(req, res, next) {
 exports.edit = function(req, res, next) {
 	var Voucher = Parse.Object.extend("Voucher");
 	var query = new Parse.Query(Voucher);
-	query.equalTo('code', req.params.code);
+	query.equalTo("code", req.params.code);
 	query.first({
 		success: function(voucher) {
-			res.render('vouchers/edit', { voucher: voucher.toJSON() });
+			res.render("vouchers/edit", { voucher: voucher.toJSON() });
 		}, error: function(error) {
 			return next(error);
 		}
@@ -91,21 +91,21 @@ exports.edit = function(req, res, next) {
  */
 
 exports.update = function(req, res, next) {
-	if (!req.params.code) return next(new Error('No voucher code.'));
+	if (!req.params.code) return next(new Error("No voucher code."));
 	var Voucher = Parse.Object.extend("Voucher");
 	var query = new Parse.Query(Voucher);
-	query.equalTo('code', req.params.code);
+	query.equalTo("code", req.params.code);
 	query.first({
 		success: function(voucher) {
 			if (!voucher) return next(new Error("No voucher found." ));
-			voucher.set('code', req.body.code == undefined ? voucher.get('code') : req.body.code);
-			voucher.set('central', req.body.central == undefined ? voucher.get('central') : req.body.central);
-			voucher.set('usageLimit', req.body.usageLimit == undefined ? voucher.get('usageLimit') : req.body.usageLimit);
-			voucher.set('startTimestamp', req.body.startTimestamp == undefined ? voucher.get('startTimestamp') : req.body.startTimestamp);
-			voucher.set('endTimestamp', req.body.endTimestamp == undefined ? voucher.get('endTimestamp') : req.body.endTimestamp);
-			voucher.set('characters', req.body.characters == undefined ? voucher.get('characters') : req.body.characters);
-			voucher.set('username', req.body.username == undefined ? voucher.get('username') : req.body.username);
-			voucher.set('tradable', req.body.tradable == undefined ? voucher.get('tradable') : req.body.tradable);
+			voucher.set("code", req.body.code == undefined ? voucher.get("code") : req.body.code);
+			voucher.set("central", req.body.central == undefined ? voucher.get("central") : req.body.central);
+			voucher.set("usageLimit", req.body.usageLimit == undefined ? voucher.get("usageLimit") : req.body.usageLimit);
+			voucher.set("startTimestamp", req.body.startTimestamp == undefined ? voucher.get("startTimestamp") : req.body.startTimestamp);
+			voucher.set("endTimestamp", req.body.endTimestamp == undefined ? voucher.get("endTimestamp") : req.body.endTimestamp);
+			voucher.set("characters", req.body.characters == undefined ? voucher.get("characters") : req.body.characters);
+			voucher.set("username", req.body.username == undefined ? voucher.get("username") : req.body.username);
+			voucher.set("tradable", req.body.tradable == undefined ? voucher.get("tradable") : req.body.tradable);
 			voucher.save(null, {
 				success: function(voucher) {
 					res.send({ voucher: voucher });
@@ -124,20 +124,22 @@ exports.update = function(req, res, next) {
  */
 
 exports.assign = function(req, res, next) {
-	if (!req.params.code) return next(new Error("No voucher code." ));
+	if (!req.params.code) return next(new Error("No voucher code."));
+	if (!req.body.username) return next(new Error("No username."));
 	var Voucher = Parse.Object.extend("Voucher");
 	var query = new Parse.Query(Voucher);
-	query.equalTo('code', req.params.code);
+	query.equalTo("code", req.params.code);
 	query.first({
 		success: function(voucher) {
 			if (!voucher) return next(new Error("No voucher found." ));
-			voucher.destroy({
+			voucher.set("username", req.body.username == undefined ? voucher.get("username") : req.body.username);
+			voucher.save(null, {
 				success: function(voucher) {
-					res.send({ success: true });
+					res.send({ voucher: voucher });
 				}, error: function(error) {
 					return next(error);
 				}
-			});
+			})
 		}, error: function(error) {
 			return next(error);
 		}
@@ -149,20 +151,33 @@ exports.assign = function(req, res, next) {
  */
 
 exports.activate = function(req, res, next) {
-	if (!req.params.code) return next(new Error("No voucher code." ));
+	if (!req.params.code) return next(new Error("No voucher code."));
+	if (!req.body.username) return next(new Error("No username."));
+	if (!req.body.character) return next(new Error("No character chosen."));
 	var Voucher = Parse.Object.extend("Voucher");
 	var query = new Parse.Query(Voucher);
-	query.equalTo('code', req.params.code);
+	query.equalTo("code", req.params.code);
 	query.first({
 		success: function(voucher) {
 			if (!voucher) return next(new Error("No voucher found." ));
-			voucher.destroy({
-				success: function(voucher) {
-					res.send({ success: true });
-				}, error: function(error) {
-					return next(error);
+			var usageLimit = voucher.get("usageLimit");
+			if (usageLimit == 0) {
+				return next(new Error("Voucher expired." ));
+			} else {
+				if (usageLimit != -1) {
+					voucher.set("usageLimit", usageLimit - 1);
+					voucher.save(null, {
+						success: function(voucher) {
+							res.send({ voucher: voucher });
+						}, error: function(error) {
+							return next(error);
+						}
+					});
 				}
-			});
+				// TODO: add chosen bundle to user
+				// var User = Parse.Object.extend("User");
+				// var query = new Parse.Query(User);
+			}
 		}, error: function(error) {
 			return next(error);
 		}
@@ -177,7 +192,7 @@ exports.delete = function(req, res, next) {
 	if (!req.params.code) return next(new Error("No voucher code." ));
 	var Voucher = Parse.Object.extend("Voucher");
 	var query = new Parse.Query(Voucher);
-	query.equalTo('code', req.params.code);
+	query.equalTo("code", req.params.code);
 	query.first({
 		success: function(voucher) {
 			if (!voucher) return next(new Error("No voucher found." ));

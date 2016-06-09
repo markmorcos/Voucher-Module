@@ -29,8 +29,8 @@ var api = new ParseServer({
 	databaseURI: 'mongodb://127.0.0.1:27017/parse',
 	// cloud: './cloud/main.js',
 	appId: 'APPLICATION_ID',
-	fileKey: 'myFileKey',
-	masterKey: 'mySecretMasterKey',
+	fileKey: 'FILE_KEY',
+	masterKey: 'MASTER_KEY',
 	serverURL: 'http://127.0.0.1:1337/parse'
 });
 
