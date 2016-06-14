@@ -1,24 +1,23 @@
-var express = require('express'),
-	ParseServer = require('parse-server').ParseServer,
-	routes = require('./routes'),
-	// models = require('./models'),
-	http = require('http'),
-	path = require('path'),
-	mongoskin = require('mongoskin')
-	dbUrl = process.env.MONGOHQ_URL || 'mongodb://127.0.0.1:27017/parse',
-	db = mongoskin.db(dbUrl, { safe: true }),
-	collections = {
-		vouchers: db.collection('vouchers'),
-		users: db.collection('users')
-	}
-	everyauth = require('everyauth');
+var express = require("express"),
+	ParseServer = require("parse-server").ParseServer,
+	ParseDashboard = require('parse-dashboard'),
+	routes = require("./routes"),
+	http = require("http"),
+	path = require("path"),
+	mongoskin = require("mongoskin")
+	everyauth = require("everyauth"),
+	bodyParser = require("body-parser"),
+	morgan = require("morgan"),
+	cookieParser = require("cookie-parser"),
+	session = require("express-session"),
+	methodOverride = require("method-override"),
+	errorHandler = require("errorhandler");
 
 everyauth.debug = true;
 
-//we need it because otherwise the session will be kept alive
 everyauth.everymodule.handleLogout(routes.user.logout);
 
-everyauth.everymodule.findUserById( function (user, callback) {
+everyauth.everymodule.findUserById(function(user, callback) {
 	callback(user)
 });
 
@@ -26,48 +25,50 @@ var app = express();
 app.locals.appTitle = "Voucher System";
 
 var api = new ParseServer({
-	databaseURI: 'mongodb://127.0.0.1:27017/parse',
-	// cloud: './cloud/main.js',
-	appId: 'APPLICATION_ID',
-	fileKey: 'FILE_KEY',
-	masterKey: 'MASTER_KEY',
-	serverURL: 'http://127.0.0.1:1337/parse'
+	databaseURI: "mongodb://localhost:27017/parse",
+	serverURL: "http://localhost:3000/parse/",
+	appId: "APPLICATION_ID",
+	fileKey: "FILE_KEY",
+	masterKey: "MASTER_KEY"
 });
 
 Parse.initialize("APPLICATION_ID");
-Parse.serverURL = 'http://127.0.0.1:1337/parse'
+Parse.serverURL = "http://localhost:3000/parse/"
 
-// Serve the Parse API on the /parse URL prefix
-app.use('/parse', api);
-
-app.use(function(req, res, next) {
-	if (!collections.vouchers || !collections.users) return next(new Error("No collections."));
-	req.collections = collections;
-	return next();
+var dashboard = new ParseDashboard({
+	apps: [{
+			serverURL: "http://localhost:3000/parse/",
+			appId: "APPLICATION_ID",
+			masterKey: "MASTER_KEY",
+			appName: "Voucher-System"
+		}]
 });
 
-// all environments
-app.set('port', process.env.PORT || 3000);
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
-app.use(express.favicon());
-app.use(express.logger('dev'));
-app.use(express.json());
-app.use(express.cookieParser('3CCC4ACD-6ED1-4844-9217-82131BDCB239'));
-app.use(express.session({ secret: '2C44774A-D649-4D44-9535-46E296EF984F' }))
+app.use("/parse", api);
+app.use("/dashboard", dashboard);
+
+app.set("port", process.env.PORT || 3000);
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "jade");
+app.use(morgan("dev"));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser("3CCC4ACD-6ED1-4844-9217-82131BDCB239"));
+app.use(session({
+	secret: "2C44774A-D649-4D44-9535-46E296EF984F",
+	resave: true,
+	saveUninitialized: false
+}));
 app.use(everyauth.middleware());
-app.use(express.urlencoded());
-app.use(express.methodOverride());
-app.use(require('stylus').middleware(__dirname + '/public'));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(methodOverride());
+app.use(require("stylus").middleware(__dirname + "/public"));
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use(function(req, res, next) {
-	if (req.session && req.session.admin)
-		res.locals.admin = true;
+	if (req.session && req.session.user) res.locals.user = req.session.user;
 	next();
 });
 
-// authorization
 var authorize = function(req, res, next) {
 	if (req.session && req.session.admin)
 		return next();
@@ -75,43 +76,38 @@ var authorize = function(req, res, next) {
 		return res.send(401);
 };
 
-// development only
-if ('development' == app.get('env')) {
-	app.use(express.errorHandler());
+if ("development" == app.get("env")) {
+	app.use(errorHandler());
 }
 
-app.use(app.router);
+app.get("/", routes.index);
 
-// pages
-app.get('/', routes.index);
+app.get("/login", routes.user.login);
+app.post("/login", routes.user.authenticate);
+app.get("/logout", routes.user.logout);
 
-app.get('/login', routes.user.login);
-app.post('/login', routes.user.authenticate);
-app.get('/logout', routes.user.logout);
+app.get("/vouchers/new", /*authorize,*/ routes.voucher.new);
+app.get("/vouchers/:code/edit", /*authorize,*/ routes.voucher.edit);
 
-app.get('/vouchers/new', /*authorize,*/ routes.voucher.new);
-app.get('/vouchers/:code/edit', /*authorize,*/ routes.voucher.edit);
+// app.all("/api", authorize);
 
-// rest api routes
-// app.all('/api', authorize);
+app.get("/api/vouchers", routes.voucher.index);
+app.get("/api/vouchers/:code", routes.voucher.index);
 
-app.get('/api/vouchers', routes.voucher.index);
-app.get('/api/vouchers/:code', routes.voucher.index);
+app.post("/api/vouchers", routes.voucher.create);
+app.put("/api/vouchers/:code", routes.voucher.update);
+app.put("/api/vouchers/:code/assign", routes.voucher.assign);
+app.put("/api/vouchers/:code/activate", routes.voucher.activate);
+app.delete("/api/vouchers/:code", routes.voucher.delete);
 
-app.post('/api/vouchers', routes.voucher.create);
-app.put('/api/vouchers/:code', routes.voucher.update);
-app.put('/api/vouchers/:code/assign', routes.voucher.assign);
-app.put('/api/vouchers/:code/activate', routes.voucher.activate);
-app.del('/api/vouchers/:code', routes.voucher.delete);
-
-app.all('*', function(req, res) {
-	res.send(404);
+app.all("*", function(req, res) {
+	res.sendStatus(404);
 })
 
 var server = http.createServer(app);
 var boot = function () {
-	server.listen(app.get('port'), function() {
-		console.info(app.locals.appTitle + ' running on http://127.0.0.1:' + app.get('port'));
+	server.listen(app.get("port"), function() {
+		console.info(app.locals.appTitle + " running on http://localhost:" + app.get("port"));
 	});
 }
 var shutdown = function() {
@@ -121,8 +117,8 @@ if (require.main === module) {
 	boot();
 }
 else {
-	console.info('Running app as a module');
+	console.info("Running app as a module");
 	exports.boot = boot;
 	exports.shutdown = shutdown;
-	exports.port = app.get('port');
+	exports.port = app.get("port");
 }

@@ -2,7 +2,7 @@
   ul.nav.nav-pills
     li(class=(menu === 'index') ? 'active' : '')
       a(href='/') Home
-    if (admin)
+    if (user)
       li(class=(menu === 'new') ? 'active' : '')
         a(href="/vouchers/new") New
       li
