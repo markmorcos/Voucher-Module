@@ -1,9 +1,10 @@
 [{
 	"code": "christmas2017",
 	"central": true,
-	"usageLimit": 1,
-	"startTimestamp": "2016-06-10 00:00:00",
-	"endTimestamp": "2016-06-12 00:00:00",
+	"usageLimit": -1,
+	"startTimestamp": "2016-12-25 00:00:00",
+	"endTimestamp": "2017-01-07 23:59:59",
 	"username": "",
-	"tradable": false
+	"tradable": false,
+	"characters": ["1001", "1002", "1003", "1004"]
 }]

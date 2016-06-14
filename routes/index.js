@@ -10,7 +10,7 @@ exports.index = function(req, res, next) {
 	var query = new Parse.Query(Voucher);
 	query.find({
 		success: function(vouchers) {
-		res.render('index', { vouchers: vouchers });
+			res.render("index", { vouchers: vouchers });
 		}, error: function(error) {
 			return next(error);
 		}

@@ -49,7 +49,7 @@ app.use("/dashboard", dashboard);
 
 app.set("port", process.env.PORT || 3000);
 app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "jade");
+app.set("view engine", "pug");
 app.use(morgan("dev"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -64,16 +64,9 @@ app.use(methodOverride());
 app.use(require("stylus").middleware(__dirname + "/public"));
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use(function(req, res, next) {
-	if (req.session && req.session.user) res.locals.user = req.session.user;
-	next();
-});
-
-var authorize = function(req, res, next) {
-	if (req.session && req.session.admin)
-		return next();
-	else
-		return res.send(401);
+var authorise = function(req, res, next) {
+	if (req.session && req.session.user) return next();
+	else return res.render("login");
 };
 
 if ("development" == app.get("env")) {
@@ -86,18 +79,21 @@ app.get("/login", routes.user.login);
 app.post("/login", routes.user.authenticate);
 app.get("/logout", routes.user.logout);
 
-app.get("/vouchers/new", /*authorize,*/ routes.voucher.new);
-app.get("/vouchers/:code/edit", /*authorize,*/ routes.voucher.edit);
+app.get("/vouchers/new", routes.voucher.new);
+app.get("/vouchers/:code", routes.voucher.show);
+app.get("/vouchers/:code/edit", routes.voucher.edit);
 
-// app.all("/api", authorize);
+// app.all("/api", authorise);
+
+app.post("/api/vouchers", routes.voucher.create);
 
 app.get("/api/vouchers", routes.voucher.index);
 app.get("/api/vouchers/:code", routes.voucher.index);
 
-app.post("/api/vouchers", routes.voucher.create);
 app.put("/api/vouchers/:code", routes.voucher.update);
 app.put("/api/vouchers/:code/assign", routes.voucher.assign);
 app.put("/api/vouchers/:code/activate", routes.voucher.activate);
+
 app.delete("/api/vouchers/:code", routes.voucher.delete);
 
 app.all("*", function(req, res) {

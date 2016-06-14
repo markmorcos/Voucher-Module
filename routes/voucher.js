@@ -17,6 +17,23 @@ exports.index = function(req, res, next) {
 };
 
 /*
+ * GET show voucher page.
+ */
+
+exports.show = function(req, res, next) {
+	var Voucher = Parse.Object.extend("Voucher");
+	var query = new Parse.Query(Voucher);
+	if (req.params.code) query.equalTo("code", req.params.code);
+	query.first({
+		success: function(voucher) {
+			res.render("vouchers/show", { voucher: voucher.toJSON() });
+		}, error: function(error) {
+			return next(error);
+		}
+	});
+};
+
+/*
  * GET new voucher page.
  */
 
@@ -39,7 +56,8 @@ exports.create = function(req, res, next) {
 		endTimestamp: req.body.endTimestamp,
 		characters: req.body.characters,
 		username: req.body.username,
-		tradable: (req.body.tradable == undefined ? false : true)
+		tradable: (req.body.tradable == undefined ? false : true),
+		characters: ["1001", "1002", "1003", "1004"]
 	};
 	var Voucher = Parse.Object.extend("Voucher");
 	new Voucher().save(voucher, {
@@ -107,7 +125,6 @@ exports.update = function(req, res, next) {
 
 exports.assign = function(req, res, next) {
 	if (!req.params.code) return next(new Error("No voucher code."));
-	if (!req.body.username) return next(new Error("No username."));
 	var Voucher = Parse.Object.extend("Voucher");
 	var query = new Parse.Query(Voucher);
 	query.equalTo("code", req.params.code);
@@ -156,8 +173,7 @@ exports.activate = function(req, res, next) {
 						}
 					});
 				}
-				var User = Parse.Object.extend("User");
-				var query = new Parse.Query(User);
+				var query = new Parse.Query(Parse.User);
 				query.equalTo("username", req.body.username);
 				query.first({
 					success: function(user) {
@@ -173,10 +189,10 @@ exports.activate = function(req, res, next) {
 						user.save(null, {
 							success: function(user) {
 								res.send({ success: true });
-							}, error: function(error) {
+							}, error: function(user, error) {
 								return next(error);
 							}
-						})
+						});
 					}, error: function(error) {
 						return next(error);
 					}

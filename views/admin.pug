@@ -17,7 +17,7 @@ block content
 						th Post Title
 				tbody
 					each voucher, index in vouchers
-						tr(data-id="#{voucher._id}", class=(!voucher.published)?'unpublished':'')
+						tr(data-id=voucher._id, class=(!voucher.published)?'unpublished':'')
 							td.action
 								button.btn.btn-danger.btn-sm.remove(type="button")
 									span.glyphicon.glyphicon-remove(title="Remove")
