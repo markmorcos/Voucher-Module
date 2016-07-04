@@ -82,6 +82,7 @@ app.get("/logout", routes.user.logout);
 app.get("/vouchers/new", routes.voucher.new);
 app.get("/vouchers/:code", routes.voucher.show);
 app.get("/vouchers/:code/edit", routes.voucher.edit);
+app.get("/vouchers/:code/assign", routes.voucher.assign);
 
 // app.all("/api", authorise);
 
@@ -90,9 +91,10 @@ app.post("/api/vouchers", routes.voucher.create);
 app.get("/api/vouchers", routes.voucher.index);
 app.get("/api/vouchers/:code", routes.voucher.index);
 
-app.put("/api/vouchers/:code", routes.voucher.update);
-app.put("/api/vouchers/:code/assign", routes.voucher.assign);
-app.put("/api/vouchers/:code/activate", routes.voucher.activate);
+app.post("/api/vouchers/:code", routes.voucher.update);
+app.post("/api/vouchers/:code/assign", routes.voucher.doAssign);
+app.post("/api/vouchers/:code/activate", routes.voucher.activate);
+app.post("/api/vouchers/:code/delete", routes.voucher.delete);
 
 app.delete("/api/vouchers/:code", routes.voucher.delete);
 

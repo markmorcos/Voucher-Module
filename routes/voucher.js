@@ -57,7 +57,7 @@ exports.create = function(req, res, next) {
 		characters: req.body.characters,
 		username: req.body.username,
 		tradable: (req.body.tradable == undefined ? false : true),
-		characters: ["1001", "1002", "1003", "1004"]
+		characters: ["1040", "1041", "1042", "1043"]
 	};
 	var Voucher = Parse.Object.extend("Voucher");
 	new Voucher().save(voucher, {
@@ -99,7 +99,7 @@ exports.update = function(req, res, next) {
 		success: function(voucher) {
 			if (!voucher) return next(new Error("No voucher found."));
 			voucher.set("code", req.body.code == undefined ? voucher.get("code") : req.body.code);
-			voucher.set("central", req.body.central == undefined ? voucher.get("central") : req.body.central);
+			voucher.set("central", req.body.central == undefined ? voucher.get("central") : req.body.central == undefined ? false : true);
 			voucher.set("usageLimit", req.body.usageLimit == undefined ? voucher.get("usageLimit") : req.body.usageLimit);
 			voucher.set("startTimestamp", req.body.startTimestamp == undefined ? voucher.get("startTimestamp") : req.body.startTimestamp);
 			voucher.set("endTimestamp", req.body.endTimestamp == undefined ? voucher.get("endTimestamp") : req.body.endTimestamp);
@@ -108,11 +108,24 @@ exports.update = function(req, res, next) {
 			voucher.set("tradable", req.body.tradable == undefined ? voucher.get("tradable") : req.body.tradable);
 			voucher.save(null, {
 				success: function(voucher) {
-					res.send({ voucher: voucher });
-				}, error: function(error) {
+					res.ana({ voucher: voucher.toJSON() });
+				}, error: function(voucher, error) {
 					return next(error);
 				}
 			})
+		}, error: function(error) {
+			return next(error);
+		}
+	});
+};
+
+exports.assign = function(req, res, next) {
+	var Voucher = Parse.Object.extend("Voucher");
+	var query = new Parse.Query(Voucher);
+	query.equalTo("code", req.params.code);
+	query.first({
+		success: function(voucher) {
+			res.render("vouchers/assign", { voucher: voucher.toJSON() });
 		}, error: function(error) {
 			return next(error);
 		}
@@ -123,7 +136,7 @@ exports.update = function(req, res, next) {
  * PUT assign voucher API.
  */
 
-exports.assign = function(req, res, next) {
+exports.doAssign = function(req, res, next) {
 	if (!req.params.code) return next(new Error("No voucher code."));
 	var Voucher = Parse.Object.extend("Voucher");
 	var query = new Parse.Query(Voucher);
