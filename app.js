@@ -65,7 +65,7 @@ app.use(require("stylus").middleware(__dirname + "/public"));
 app.use(express.static(path.join(__dirname, "public")));
 
 var authorise = function(req, res, next) {
-	if (req.session && req.session.user) return next();
+	if (Parse.User.current()) return next();
 	else return res.render("login");
 };
 
@@ -77,14 +77,14 @@ app.get("/", routes.index);
 
 app.get("/login", routes.user.login);
 app.post("/login", routes.user.authenticate);
-app.get("/logout", routes.user.logout);
+app.get("/logout", authorise, routes.user.logout);
 
-app.get("/vouchers/new", routes.voucher.new);
+app.get("/vouchers/new", authorise, routes.voucher.new);
 app.get("/vouchers/:code", routes.voucher.show);
-app.get("/vouchers/:code/edit", routes.voucher.edit);
-app.get("/vouchers/:code/assign", routes.voucher.assign);
+app.get("/vouchers/:code/edit", authorise, routes.voucher.edit);
+app.get("/vouchers/:code/assign", authorise, routes.voucher.assign);
 
-// app.all("/api", authorise);
+app.all("/api", authorise);
 
 app.post("/api/vouchers", routes.voucher.create);
 
@@ -95,8 +95,6 @@ app.post("/api/vouchers/:code", routes.voucher.update);
 app.post("/api/vouchers/:code/assign", routes.voucher.doAssign);
 app.post("/api/vouchers/:code/activate", routes.voucher.activate);
 app.post("/api/vouchers/:code/delete", routes.voucher.delete);
-
-app.delete("/api/vouchers/:code", routes.voucher.delete);
 
 app.all("*", function(req, res) {
 	res.sendStatus(404);
