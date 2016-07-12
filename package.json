@@ -22,6 +22,7 @@
 		"expect.js": "~0.2.0",
 		"everyauth": "~0.4.5",
 		"parse-server": "~2.2.10",
-		"parse-dashboard": "~1.0.14"
+		"parse-dashboard": "~1.0.14",
+		"websocket": "~1.0.23"
 	}
 }

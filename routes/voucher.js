@@ -38,7 +38,7 @@ exports.show = function(req, res, next) {
  */
 
 exports.new = function(req, res, next) {
-	if (!req.body.title) res.render("vouchers/new");
+	if (!req.body.title) res.render("vouchers/new", { bundles: req.session.bundles });
 };
 
 /*
@@ -46,7 +46,7 @@ exports.new = function(req, res, next) {
  */
 
 exports.create = function(req, res, next) {
-	if (!req.body.usageLimit) return res.render("vouchers/new", { error: "Please enter the usage limit." });
+	if (!req.body.usageLimit) return res.render("vouchers/new", { error: "Please enter the usage limit.", bundles: req.session.bundles });
 	var generatedCode = Math.random().toString(36).substr(2);
 	var voucher = {
 		code: req.body.code || generatedCode,
@@ -57,7 +57,7 @@ exports.create = function(req, res, next) {
 		characters: req.body.characters,
 		username: req.body.username,
 		tradable: (req.body.tradable == undefined ? false : true),
-		characters: ["1040", "1041", "1042", "1043"]
+		characters: req.body["characters[]"]
 	};
 	var Voucher = Parse.Object.extend("Voucher");
 	new Voucher().save(voucher, {

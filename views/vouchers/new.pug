@@ -29,5 +29,11 @@ block content
 					label(for="tradable")
 						|Tradable
 						input#tradable.form-control(name="tradable", type="checkbox")
+				.form-group
+					label(for="bundles")
+						|Bundles
+						select#bundles.form-control(name="characters[]", multiple="true")
+							each bundle in bundles
+								option(value=bundle.id)= bundle.name
 				p
 					button.btn.btn-success(type="submit") Submit

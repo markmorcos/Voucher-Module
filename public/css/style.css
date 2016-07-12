@@ -29,3 +29,8 @@ td.action {
 .alert {
   margin-top: 20px;
 }
+
+#bundles {
+  height: 200px;
+  width: 100%;
+}
